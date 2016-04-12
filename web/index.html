@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta name=viewport content="width=device-width, initial-scale=1">
+    <style>
+      html, body {
+        width: 100%;
+        height: 100%;
+        padding: 0;
+        margin: 0;
+        position: absolute;
+        font-family: Verdana, Arial, sans-serif;
+      }
+      #up {
+        position: absolute;
+        top: 0;
+        width: 100%;
+        height: 30%;
+      }
+      #down {
+        position: absolute;
+        bottom: 0;
+        width: 100%;
+        height: 30%;
+      }
+      #left {
+        position: absolute;
+        left: 0;
+        width: 50%;
+        top: 33%;
+        height: 30%;
+      }
+      #right {
+        position: absolute;
+        right: 0;
+        width: 50%;
+        top: 33%;
+        height: 30%;
+      }
+      .state {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+      }
+
+      .direction {
+
+      }
+
+      .direction.press {
+        background-color: #333333;
+        border: 0;
+      }
+
+      body.red {
+        background-color: red;
+      }
+
+      body.blue {
+        background-color: blue;
+      }
+
+      #welcome {
+
+      }
+
+      #join {
+
+      }
+
+      #play {
+
+      }
+
+      #win {
+
+      }
+
+      #lose {
+
+      }
+
+      .hidden {
+          display: none;
+      }
+    </style>
+  </head>
+  <body>
+
+    <div id="welcome" class="state">
+      <h1>Welcome to Cirfuffle!</h1>
+      <p>Figure out which spot is yours, and get to your goal as fast as you can!</p>
+      <p>The first team with all of the spots in the boxes wins.</p>
+      <button type="button" id="connect">Connect...</button>
+    </div>
+
+    <div id="play" class="state hidden">
+      <button id="up">UP</button>
+      <button id="down">DOWN</button>
+      <button id="left">LEFT</button>
+      <button id="right">RIGHT</button>
+    </div>
+
+    <div id="join" class="state hidden">
+      <span id="start-status">Welcome! Waiting for the match to start.</span>
+    </div>
+
+    <div id="win" class="state hidden">
+      You won!
+      <button type="button" class="reset">Try again...</button>
+    </div>
+
+    <div id="lose" class="state hidden">
+      You lost!
+      <button type="button" class="reset">Try again...</button>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript">
+      var url = new URL(document.location.href);
+      var socket = io(url.host);
+      var team = null;
+      var allStates = ["play", "welcome", "join", "win", "lose"];
+      var $ = function(s){
+        return document.querySelector(s);
+      };
+      var $$ = function(s){
+        return Array.prototype.slice.call(document.querySelectorAll(s), 0);
+      };
+      var connectButton = $("#connect");
+      var buttons = {
+        "up": $('#up'),
+        "down": $("#down"),
+        "left": $("#left"),
+        "right": $("#right")
+      };
+
+      var reset = function(){
+        $("#connect").disabled = false;
+        document.body.classList.remove(team);
+        setState("welcome");
+      };
+
+      var setState = function(stateName){
+        allStates.forEach(function(state){
+          if (state === stateName) {
+            $("#" + state).classList.remove("hidden");
+          } else {
+            $("#" + state).classList.add("hidden");
+          }
+        });
+      };
+
+      socket.on("join", function(data){
+        team = data.team;
+        document.body.classList.add(team);
+        setState("join");
+      });
+
+      socket.on("start", function(data){
+        setState("play");
+      });
+
+      socket.on("win", function(data){
+        setState("win");
+      });
+
+      socket.on("lose", function(data){
+        setState("lose");
+      });
+
+      socket.on("reset", function(data){
+        reset();
+      });
+
+      socket.on("inProgress", function(data){
+        alert("A game is in progress, please wait...");
+      });
+
+      buttons.up.addEventListener("click", function(){
+        socket.emit("move", {direction:"up"});
+      });
+
+      buttons.down.addEventListener("click", function(){
+        socket.emit("move", {direction:"down"});
+      });
+
+      buttons.left.addEventListener("click", function(){
+        socket.emit("move", {direction:"left"});
+      });
+
+      buttons.right.addEventListener("click", function(){
+        socket.emit("move", {direction:"right"});
+      });
+
+      $$(".reset").forEach(function(element){
+        element.addEventListener("click", function(event){
+          reset();
+        });
+      });
+
+      connectButton.addEventListener("click", function(event){
+        $("#connect").disabled = true;
+        socket.emit("join", {});
+      });
+    </script>
+  </body>
+</html>

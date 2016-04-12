@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Cirfuffle manager</title>
+    <meta name=viewport content="width=device-width, initial-scale=1">
+  </head>
+  <body>
+    <button type="button" id="start">start</button>
+    <button type="button" id="reset">reset</button>
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="text/javascript">
+      var url = new URL(document.location.href);
+      var socket = io("http://" + url.host + "/manager");
+      document.querySelector("#start").addEventListener("click", function(event){
+        socket.emit("start");
+      });
+      document.querySelector("#reset").addEventListener("click", function(event){
+        socket.emit("reset");
+      });
+    </script>
+  </body>
+</html>
